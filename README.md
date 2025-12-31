@@ -25,6 +25,7 @@ MCP server for Gmail integration with Claude, Cursor, Kiro, and other MCP client
 
 ### 1. Install Dependencies
 ```bash
+cd Gmail-mcp-server
 pip install -r requirements.txt
 ```
 
@@ -38,13 +39,13 @@ pip install -r requirements.txt
 ```bash
 python authenticate.py
 ```
-This opens browser for Google login and creates `token.json`.
+This opens browser for Google login and creates `token.json` automatically.
 
 ---
 
 ## Running the Server
 
-Add this to your config file:
+Add this to your config file, make sure to give path of server.py
 
 ```json
 {
@@ -56,7 +57,10 @@ Add this to your config file:
   }
 }
 ```
+like this : <img width="632" height="202" alt="image" src="https://github.com/user-attachments/assets/f051873a-92e7-41be-a8d4-87730280a676" />
+
 *Note: Replace `<ABSOLUTE_PATH_TO_REPO>` with the actual full path to this directory.*
+
 Now paste the config in your mcp.json file. to use the server in IDE
 
 Next refresh your IDE and you should be able to use the server.
