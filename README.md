@@ -1,130 +1,93 @@
-# Gmail MCP Server
+# Email MCP Server
 
-MCP server for Gmail integration with Claude, Cursor, Kiro, and other MCP clients.
+A Model Context Protocol (MCP) server implementation for interacting with custom email providers via SMTP and IMAP. This server allows LLMs to list folders, read emails, draft emails, and send emails using your own email infrastructure.
 
-## Tools
-| Tool | Description |
-|------|-------------|
-| `list_emails` | List/search emails (returns id, snippet, subject, from, date) |
-| `read_email` | Read full email content by ID |
-| `create_draft` | Create a draft email (requires `send_draft` to actually send) |
-| `send_draft` | Send a drafted email |
+## Features
 
-## Prompts
-| Prompt | Description |
-|--------|-------------|
-| `summarize_unread` | Summarize unread emails with priority |
-| `draft_reply` | Draft reply to an email |
-| `compose_email` | Compose new email |
-| `search_emails` | Natural language email search |
-| `daily_digest` | Daily email digest by category |
+-   **Check Connection**: Verify SMTP and IMAP connectivity.
+-   **List Folders**: Retrieve all available mailboxes.
+-   **List Emails**: Fetch metadata for emails in a specific folder, with filtering options.
+-   **Read Email**: Get the full content of a specific email.
+-   **Draft Email**: Create emails and save them to the Drafts folder.
+-   **Send Email**: Send emails via SMTP and save a copy to the Sent folder.
 
----
+## Quickstart
 
-## Setup Details for running it locally
+Follow these steps to set up the Email MCP server.
 
-### 1. Install Dependencies
-```bash
-pip install -r requirements.txt
-```
+### 1. Installation
 
-### 2. Get Google OAuth Credentials
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create project → Enable **Gmail API**
-3. **APIs & Services** → **Credentials** → **Create OAuth Client ID** → **Desktop App**
-4. Download JSON → rename to `credentials.json` → place in this folder (gmail-mcp-server)
+1.  **Clone the repository**:
+    ```bash
+    git clone <your-repo-url>
+    cd "Custom email MCP"
+    ```
 
-### 3. Authenticate
-The server supports **Login-on-Demand**. You don't need to authenticate before running the server.
+2.  **Create and activate a virtual environment**:
+    *   **Windows**:
+        ```powershell
+        python -m venv venv
+        .\venv\Scripts\activate
+        ```
+    *   **macOS/Linux**:
+        ```bash
+        python3 -m venv venv
+        source venv/bin/activate
+        ```
 
-1.  **Start the Server**: Run it locally or in the cloud.
-2.  **Ask a Question**: e.g., "Check my unread emails".
-3.  **Follow Instructions**: If you aren't logged in, the server will reply with a **URL**.
-4.  **Authorize**: Click the URL, authorize Google, and copy the code.
-5.  **Submit Code**: Paste the code into the chat using the `submit_auth_code` tool (or just tell the model "Here is the code: ...").
+3.  **Install dependencies**:
+    ```bash
+    pip install -r requirements.txt
+    ```
 
----
+### 2. Configuration
 
-## Running the Server
+1.  **Create the `.env` file**:
+    Copy `.env.example` to `.env`:
+    ```bash
+    cp .env.example .env
+    # OR on Windows
+    copy .env.example .env
+    ```
 
-Add this to your config file:
+2.  **Update `.env`**:
+    Open the `.env` file and fill in your email provider details (SMTP/IMAP settings and credentials).
 
-```json
-{
-  "mcpServers": {
-    "gmail": {
-      "command": "python",
-      "args": ["<ABSOLUTE_PATH_TO_REPO>/server.py"]
-    }
-  }
-}
-```
-*Note: Replace `<ABSOLUTE_PATH_TO_REPO>` with the actual full path to this directory.*
-Now paste the config in your mcp.json file. to use the server in IDE
+### 3. Add to MCP Client (IDE/Claude Desktop)
 
-Next refresh your IDE and you should be able to use the server.
+Add the following configuration to your MCP settings file (e.g., `claude_desktop_config.json` or your IDE's MCP config).
 
-### Test with MCP Inspector
-```bash
-npx @modelcontextprotocol/inspector python "D:/path/to/gmail-mcp-server/server.py"
-```
-
----
-
-## Configuration
-
-You can configure the server using environment variables to avoid hardcoding files or to support different environments. You can either set these in your system, in the `mcp.json` env block, or by creating a `.env` file in the project directory (copy `.env.example`).
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `GMAIL_CREDENTIALS_PATH` | Path to `credentials.json` | `credentials.json` (in repo) |
-| `GMAIL_TOKEN_PATH` | Path to `token.json` | `token.json` (in repo) |
-
-### Option 1: Using `.env` file (Recommended for local)
-1. Copy `.env.example` to `.env`
-2. Update the values in `.env`
-3. The server will automatically load them.
-
-### Option 2: `mcp.json` with Env Vars
+**Important**: Use the **absolute path** to the python executable inside your virtual environment and the absolute path to the `src/server.py` script.
 
 ```json
 {
   "mcpServers": {
-    "gmail": {
-      "command": "python",
-      "args": ["/path/to/server.py"],
+    "custom-email": {
+      "command": "C:/path/to/Custom email MCP/venv/Scripts/python",
+      "args": [
+        "C:/path/to/Custom email MCP/src/server.py"
+      ],
       "env": {
-        "GMAIL_CREDENTIALS_PATH": "/secure/path/to/credentials.json",
-        "GMAIL_TOKEN_PATH": "/secure/path/to/token.json"
+        "PYTHONPATH": "C:/path/to/Custom email MCP"
       }
     }
   }
 }
 ```
 
----
+### Configuration Breakdown
 
-## File Structure
-```
-gmail-mcp-server/
-├── server.py          # MCP server (FastMCP)
-├── gmail_client.py    # Gmail API wrapper
-├── auth.py            # OAuth2 handling
-├── authenticate.py    # One-time auth script
-├── credentials.json   # Google OAuth creds (you provide)
-├── token.json         # Auth token (auto-generated)
-└── requirements.txt   # Dependencies
-```
+Here is what each part of the configuration does:
 
-## Security - IMPORTANT
+*   **`command`**: The absolute path to the Python executable **inside your virtual environment**.
+    *   *Why?* This ensures the server runs with the correct installed dependencies (aioimaplib, aiosmtplib, etc.) independent of your system Python.
+    *   *How to find it*: In your terminal, with `venv` activated, run:
+        *   Windows (PowerShell): `(Get-Command python).Source`
+        *   macOS/Linux: `which python`
 
-*   **`credentials.json`**: This file identifies the **Application** (the code), NOT you.
-    *   *Risk Level*: Low.
-    *   *If shared*: Someone can run the app pretending to be your project, but they **cannot** access your emails without logging in.
-*   **`token.json`**: This file contains the **Access Keys** to your specific Gmail account.
-    *   *Risk Level*: **CRITICAL**.
-    *   *If shared*: Someone **CAN** read and send emails as you.
-    *   **NEVER SHARE `token.json`.** Ensure it is in your `.gitignore` (it is by default in this repo).
+*   **`args`**: A list of arguments passed to the command.
+    *   The first argument is the **absolute path** to the `src/server.py` file.
+    *   *Why?* This tells python which script to execute.
 
-- `send_draft` sends real emails - use carefully
-
+*   **`env` -> `PYTHONPATH`**: The absolute path to the project root directory.
+    *   *Why?* This tells Python where to look for the `src` module. Without this, you might see "Module not found: src" errors because the script is running from outside the project context.
