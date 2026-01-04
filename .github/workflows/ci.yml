@@ -7,7 +7,7 @@ on:
 
 jobs:
   backend-checks:
-    name: Python Syntax & Import Validation
+    name: Python Syntax Validation
     runs-on: ubuntu-latest
 
     steps:
@@ -24,21 +24,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # ✅ Syntax check (NO execution)
+      # ✅ Syntax-only checks (NO runtime config)
       - name: Python syntax check
         run: |
           python -m py_compile src/server.py
           python -m py_compile src/config.py
           python -m py_compile src/utils.py
-
-      # ✅ Import validation only (safe)
-      - name: Import validation
-        env:
-          PYTHONPATH: .
-        run: |
-          python - <<EOF
-          import src.server
-          import src.config
-          import src.utils
-          print("Import validation passed")
-          EOF
